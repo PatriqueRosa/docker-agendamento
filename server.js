@@ -118,16 +118,16 @@ app.get('/horarios', async (req, res) => {
     return res.status(400).json({ message: "Formato de data inválido. Use YYYY-MM-DD." });
   }
 
-  const todosHorarios = [
-    "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
-    "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
-  ];
-
   try {
     const agora = new Date();
     const dataAtual = agora.toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
     const horaAtual = agora.getHours();
     const minutoAtual = agora.getMinutes();
+
+    // Verifica se o dia solicitado é anterior ao dia atual
+    if (dia < dataAtual) {
+      return res.status(400).json({ message: "Não é possível agendar em dias anteriores à data atual." });
+    }
 
     console.log(`[DEBUG] Hora atual: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
@@ -137,6 +137,11 @@ app.get('/horarios', async (req, res) => {
     if (blockDay?.block) {
       return res.status(403).json({ message: "Dia indisponível" });
     }
+
+    const todosHorarios = [
+      "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", 
+      "14:00", "15:00", "16:00", "17:00", "18:00", "19:00"
+    ];
 
     // Obtém os agendamentos para o dia informado
     const agendamentos = await Agendamento.find({ dia });
@@ -149,7 +154,7 @@ app.get('/horarios', async (req, res) => {
       const [hora, minuto] = horario.split(':').map(Number);
 
       // Verifica se o horário já passou (apenas para o dia atual)
-      const horarioPassou = dia === dataAtual && (hora < horaAtual || (hora === horaAtual && minuto < minutoAtual));
+      const horarioPassou = dia === dataAtual && (hora < horaAtual || (hora === horaAtual && minuto <= minutoAtual));
 
       return !horarioPassou && !horariosOcupados.has(horario);
     });
