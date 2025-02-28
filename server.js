@@ -16,7 +16,8 @@ app.use(cors({origin: '*'}));
 app.use(express.json());
 
 // Conectar ao MongoDB Atlas
-mongoose.connect(process.env.MONGODB_URI).then(() => {
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
     console.log('Conectado ao MongoDB Atlas');
   })
   .catch((error) => {
@@ -121,15 +122,15 @@ app.get('/horarios', async (req, res) => {
   try {
     const agora = new Date();
     const dataAtual = agora.toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
-    const horaAtual = agora.getHours();
-    const minutoAtual = agora.getMinutes();
+    const horaAtual = agora.getUTCHours(); // pega a hora atual em UTC
+    const minutoAtual = agora.getUTCMinutes(); // pega os minutos atuais em UTC
 
     // Verifica se o dia solicitado é anterior ao dia atual
     if (dia < dataAtual) {
       return res.status(400).json({ message: "Não é possível agendar em dias anteriores à data atual." });
     }
 
-    console.log(`[DEBUG] Hora atual: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
+    console.log(`[DEBUG] Hora atual UTC: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
     // Verifica se o dia está bloqueado
     const blockDay = await BlockDay.findOne({ dia });
@@ -153,13 +154,13 @@ app.get('/horarios', async (req, res) => {
     const horariosDisponiveis = todosHorarios.filter(horario => {
       const [hora, minuto] = horario.split(':').map(Number);
 
-      // Verifica se o horário já passou (apenas para o dia atual)
+        // aqui tambem vamos calcular a hora em UTC
       const horarioPassou = dia === dataAtual && (hora < horaAtual || (hora === horaAtual && minuto <= minutoAtual));
 
       return !horarioPassou && !horariosOcupados.has(horario);
     });
 
-    console.log(`[DEBUG] Horários disponíveis para ${dia}:`, horariosDisponiveis);
+    console.log(`Horários disponíveis para ${dia}:`, horariosDisponiveis);
 
     res.json(horariosDisponiveis);
   } catch (error) {
@@ -167,7 +168,6 @@ app.get('/horarios', async (req, res) => {
     res.status(500).json({ message: 'Erro ao obter horários disponíveis' });
   }
 });
-
 
 // Rota para verificar se um dia está bloqueado
 app.post('/blockday', async (req, res) => {
