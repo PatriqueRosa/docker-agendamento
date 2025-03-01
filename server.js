@@ -1,11 +1,10 @@
 const express = require('express'); 
-const mongoose = require('mongoose');
-const { v4: uuidv4 } = require('uuid');
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose'); // Importar a biblioteca mongoose
+const { v4: uuidv4 } = require('uuid'); // Importar a biblioteca uuid
+const jwt = require('jsonwebtoken'); // Importar a biblioteca jsonwebtoken
+const bcrypt = require('bcryptjs'); // Importar a biblioteca bcryptjs
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { format, utcToZonedTime } = require('date-fns-tz'); // Importar date-fns-tz
 
 dotenv.config();
 
@@ -111,7 +110,7 @@ app.get('/servicos', (req, res) => {
   res.json(servicos);
 });
 
-// Rota para obter horários disponíveis com base no dia, usando date-fns-tz
+// Rota para obter horários disponíveis com base no dia
 app.get('/horarios', async (req, res) => {
   const { dia } = req.query;
 
@@ -121,26 +120,22 @@ app.get('/horarios', async (req, res) => {
   }
 
   try {
-    // Definir timezone para Brasília
-    const timeZone = 'America/Sao_Paulo';
-    
-    // Obter a data e hora atual no fuso horário de Brasília
     const agora = new Date();
-    const agoraBrasilia = utcToZonedTime(agora, timeZone);
+    const dataAtual = agora.toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
+    let horaAtual = agora.getUTCHours() - 3; // pega a hora atual em UTC
+    if (horaAtual < 0) {
+      horaAtual = 24 + horaAtual;
+    }
+    const minutoAtual = agora.getUTCMinutes(); // pega os minutos atuais em UTC
     
-    // Formatar a data atual no formato YYYY-MM-DD
-    const dataAtual = format(agoraBrasilia, 'yyyy-MM-dd');
-    
-    // Obter hora e minuto no fuso horário de Brasília
-    const horaAtual = agoraBrasilia.getHours();
-    const minutoAtual = agoraBrasilia.getMinutes();
-    
-    console.log(`[DEBUG] Hora atual (Brasília): ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
+    console.log(`[DEBUG] Hora atual UTC: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
     // Verifica se o dia solicitado é anterior ao dia atual
     if (dia < dataAtual) {
       return res.status(400).json({ message: "Não é possível agendar em dias anteriores à data atual." });
     }
+
+    console.log(`[DEBUG] Hora atual UTC: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
     // Verifica se o dia está bloqueado
     const blockDay = await BlockDay.findOne({ dia });
@@ -164,7 +159,7 @@ app.get('/horarios', async (req, res) => {
     const horariosDisponiveis = todosHorarios.filter(horario => {
       const [hora, minuto] = horario.split(':').map(Number);
 
-      // Verifica se o horário já passou (considerando o fuso de Brasília)
+        // aqui tambem vamos calcular a hora em UTC
       const horarioPassou = dia === dataAtual && (hora < horaAtual || (hora === horaAtual && minuto <= minutoAtual));
 
       return !horarioPassou && !horariosOcupados.has(horario);
