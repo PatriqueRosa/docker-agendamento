@@ -123,7 +123,10 @@ app.get('/horarios', async (req, res) => {
     const agora = new Date();
     const dataAtual = agora.toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
     const horaAtual = agora.getUTCHours(); // pega a hora atual em UTC
+    horaAtual = horaAtual - 3; // ajusta a hora para o horário de Brasília
     const minutoAtual = agora.getUTCMinutes(); // pega os minutos atuais em UTC
+    
+    console.log(`[DEBUG] Hora atual UTC: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
     // Verifica se o dia solicitado é anterior ao dia atual
     if (dia < dataAtual) {
