@@ -122,13 +122,8 @@ app.get('/horarios', async (req, res) => {
   try {
     const agora = new Date();
     const dataAtual = agora.toISOString().split('T')[0]; // Obtém a data atual no formato YYYY-MM-DD
-    let horaAtual = agora.getUTCHours() - 3; // pega a hora atual em UTC
-    if (horaAtual < 0) {
-      horaAtual = 24 + horaAtual;
-    }
+    const horaAtual = agora.getUTCHours(); // pega a hora atual em UTC
     const minutoAtual = agora.getUTCMinutes(); // pega os minutos atuais em UTC
-    
-    console.log(`[DEBUG] Hora atual UTC: ${horaAtual}:${minutoAtual} - Data atual: ${dataAtual} - Dia requisitado: ${dia}`);
 
     // Verifica se o dia solicitado é anterior ao dia atual
     if (dia < dataAtual) {
@@ -314,3 +309,4 @@ app.delete('/blockday/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
