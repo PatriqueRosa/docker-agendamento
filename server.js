@@ -12,7 +12,7 @@ const app = express();
 const SECRET_KEY = process.env.SECRET_KEY;
 const port = process.env.PORT || 3000;
 
-app.use(cors({origin: '*'}));
+app.use(cors({origin: 'https://www.jkstudios.top'}));
 app.use(express.json());
 
 // Conectar ao MongoDB Atlas
